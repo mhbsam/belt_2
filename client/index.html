@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Black Belt!</title>
+
+        <script src="angular/angular.js"></script>
+        <script src="angular-route/angular-route.js"></script>
+        <script src="moment/moment.js"></script>
+        <script src="angular-moment/angular-moment.js"></script>
+        <script>
+            var myApp = angular.module('myApp', ['ngRoute', 'angularMoment']);
+
+            myApp.config(function ($routeProvider) {
+              $routeProvider
+
+                .when('/',{
+                    templateUrl: 'partials/dashboard.html',
+                    controller : 'DashboardController',
+                })
+
+                .when('/logout',{
+                    templateUrl: 'partials/dashboard.html',
+                    controller: 'LoginController',
+                })
+
+
+                .when('/question',{
+                    templateUrl: 'partials/question.html',
+                    controller : 'QuestionController',
+                })
+
+                .when('/game',{
+                    templateUrl: 'partials/game.html',
+                    controller : 'GameController',
+                })
+
+                .otherwise({
+                  redirectTo: '/'
+                })
+            });
+//========================================================================================
+//------------------------------ Customer Factory --------------------------------------
+//========================================================================================
+            myApp.factory('CustomerFactory', function($http){
+
+                var factory ={};
+                // var customers = [{firstname:'user_fn_here'}, {lastname:'user_ln_here'}, {birthday:'user_birthday_here'}];
+
+
+                //*** Show all the customers
+                factory.index = function(callback){
+                    $http.get('/index_customers').then(function(res){
+                        if (typeof(callback) == 'function'){
+                            // console.log(res.data);
+                            callback(res.data)
+                        }
+                    })
+                }
+
+
+                //*** Create a new customer
+                factory.CreateCustomer = function(newCustomer, callback){
+                    console.log('sending customer creation request to server for:', newCustomer);
+                    $http.post('/new_customer', newCustomer).then(function(res) {
+                        if (typeof(callback) == 'function'){
+                            callback(res.data)
+                        }
+                    })
+                }
+
+
+                //*** Delete a customer
+                factory.DeleteCustomer = function(customer, callback) {
+                    console.log('customer in factory to be deleted', customer);
+                    $http.post('/delete_customer', customer).then(function(res){
+                        if (typeof(callback) == 'function'){
+                            callback(res.data)
+                        }
+                    })
+                }
+
+                return factory;
+            });
+
+//========================================================================================
+//-------------------------------- Customers Controller ----------------------------------
+//========================================================================================
+            myApp.controller('CustomersController', ['$scope','CustomerFactory', '$location','User', function($scope, CustomerFactory, $location, User ){
+
+                console.log('Starting customers controller');
+
+                $scope.customers =[];
+
+
+                // *** Request the user
+                User.get(function(data){
+                    $scope.user = data;
+                    console.log('user should be here', $scope.user);
+                })
+                if(!$scope.user){
+                    $location.url('/login');
+                }
+
+
+                // *** Request a list of all the customers
+                CustomerFactory.index(function(data){
+                    $scope.customers = data;
+                    console.log('customer scope here',$scope.customers);
+                })
+
+
+                //*** Request to create a new user
+                $scope.CreateCustomer = function(){
+                    console.log('initiating customer creation with:', $scope.newCustomer);
+                    CustomerFactory.CreateCustomer($scope.newCustomer, function(data){
+                        $scope.customers = data;
+                        // $location.url('/');
+                        $scope.newCustomer={};
+                    })
+                }
+
+
+                // *** Request to delete a customer
+                $scope.DeleteCustomer = function(customer){
+                    CustomerFactory.DeleteCustomer(customer, function(data){
+                        $scope.customers = data;
+                    })
+                }
+            }]);
+
+//========================================================================================
+//                              ***** User Factory *****
+//========================================================================================
+
+            myApp.factory('User',['$location', function($location){
+                var factory ={};
+                var user = null;
+
+                factory.get = function(callback){
+                    callback(user);
+                }
+
+                factory.set = function(name, callback){
+                    user =name;
+                    callback(user);
+                }
+
+                factory.logout = function(){
+                    user = null;
+                $location.url('/dashboard');
+
+                }
+
+                return factory;
+            }]);
+//========================================================================================
+//                              ***** Login controller *****
+//========================================================================================
+            myApp.controller('LoginController', ['$scope', 'CustomerFactory','$location','User', function($scope, CustomerFactory, $location, User ){
+
+                console.log('starting login controller');
+
+
+                User.logout();
+
+
+                //*** Request to create a new user
+                $scope.CreateCustomer = function(){
+                    console.log('initiating customer creation with:', $scope.newCustomer);
+                    CustomerFactory.CreateCustomer($scope.newCustomer, function(data){
+                        $scope.customers = data;
+
+
+                        // *** setting up minisession between controllers
+                        User.set($scope.newCustomer.name, function(data){
+                            $scope.user = data;
+
+
+                        $scope.newCustomer={};
+
+                        $location.url('/dashboard');
+                    })
+                })}
+
+            }]);
+//========================================================================================
+//                           ***** Dashboard controller *****
+//========================================================================================
+            myApp.controller('DashboardController', ['$scope', 'CustomerFactory','$location','User', function($scope, CustomerFactory, $location, User ){
+
+                console.log('starting Dashboard controller');
+
+                User.get(function(data){
+                    $scope.user = data;
+                    console.log('user should be here', $scope.user);
+                })
+
+                if(!$scope.user){
+                    var user = prompt('please enter your name');
+                    CustomerFactory.CreateCustomer({name:user}, function(data){
+                        $scope.customers = data;
+
+                        // *** setting up minisession between controllers
+                        User.set(user, function(data){
+                            $scope.user = data;
+                        })
+
+                        // $location.url('/dashboard');
+                    })
+                }
+
+
+                // *** Request a list of all the customers
+                var customer_index = function(){ CustomerFactory.index(function(data){
+                    $scope.customers = data;
+                    console.log('customer scope at dashboard controller:',$scope.customers);
+                    })
+                }
+                customer_index();
+
+                // *** Request to play a game
+                $scope.play = function(){
+                        $location.url('/game');
+                    }
+
+            }]);
+
+//========================================================================================
+//                           ***** Question Factory *****
+//========================================================================================
+            myApp.factory('QuestionFactory', function($http){
+                console.log('starting Question factory');
+
+                var factory = {};
+
+                //requesting a list of all the orders from server
+                factory.index = function(callback){
+                    console.log('requesting a list of all the questions from server');
+                    $http.get('/index_questions').then(function(res){
+                        if (typeof(callback) == 'function'){
+                            callback(res.data);
+                        }
+                    })
+                }
+
+                //*** sending new question creation request to server
+                factory.CreateQuestion = function(newQuestion, callback){
+                    console.log('sending question creation request to server for:', newQuestion);
+                    // console.log(newOrder.order_quantity);
+                    // console.log(newOrder.product.initial_quantity);
+                    $http.post('/new_question', newQuestion).then(function(res){
+                        if (typeof(callback) == 'function'){
+                            callback(res.data);
+                        }
+                    })
+
+                }
+
+                return factory;
+            });
+
+//========================================================================================
+//                           ***** Question Controller *****
+//========================================================================================
+            myApp.controller('QuestionController', ['$scope', 'CustomerFactory', 'QuestionFactory','$location','User', function($scope, CustomerFactory, QuestionFactory, $location, User ){
+
+                console.log('starting Question controller');
+
+                User.get(function(data){
+                    $scope.user = data;
+                    console.log('user should be here', $scope.user);
+                })
+                if(!$scope.user){
+                    $location.url('/login');
+                }
+
+                $scope.dashboard = function(){
+                        $location.url('/dashboard');
+                    }
+
+                //*** Request to create a new question
+                $scope.CreateQuestion = function(){
+                    console.log('initiating question creation with:', $scope.newQuestion);
+                    QuestionFactory.CreateQuestion($scope.newQuestion, function(data){
+                        $scope.question = data;
+
+                        $scope.newQuestion={};
+
+                        $location.url('/dashboard');
+                    })
+                }
+
+            }]);
+
+
+//========================================================================================
+//                           ***** Game  Factory *****
+//========================================================================================
+            myApp.factory('GameFactory', function($http){
+                console.log('starting Game factory');
+
+                return factory;
+            });
+
+//========================================================================================
+//                           ***** Game Controller *****
+//========================================================================================
+            myApp.controller('GameController', ['$scope', 'CustomerFactory', 'QuestionFactory','$location','User', function($scope, CustomerFactory, QuestionFactory, $location, User ){
+
+                console.log('starting Game controller');
+
+                User.get(function(data){
+                    $scope.user = data;
+                    console.log('user should be here', $scope.user);
+                })
+                if(!$scope.user){
+                    $location.url('/dashboard');
+                }
+
+                $scope.dashboard = function(){
+                        $location.url('/dashboard');
+                    }
+
+
+                // *** Request a list of all the questions
+                var question_index = function(){ QuestionFactory.index(function(data){
+                    $scope.questions = data;
+                    console.log('questions scope at game controller:',$scope.questions);
+                    })
+                }
+                question_index();
+
+
+                $scope.CreateScore = function(){
+                    console.log('initiating score creation with:', $scope.subVal);
+                    GameFactory.CreateQuestion($scope.newQuestion, function(data){
+                        $scope.question = data;
+
+                        $scope.newQuestion={};
+
+                        $location.url('/dashboard');
+                    })
+                }
+
+            }]);
+//--------------------------------------------------------------------------------------
+</script>
+</head>
+    <body ng-app='myApp'>
+        <a href="#!/dashboard">Home</a> | <a href="#!/question">Add a New Question</a> | <a href="#!/logout">Logout</a>
+        <div ng-view="">
+        </div>
+    </body>
+</html>

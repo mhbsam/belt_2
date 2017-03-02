@@ -1,0 +1,15 @@
+
+<h2>New a question</h2>
+
+<form ng-submit='CreateQuestion()'>
+
+    <textarea ng-model='newQuestion.question' placeholder='Question' rows="4" cols="40" minlength=15></textarea><br>
+
+    <input type="text" ng-model='newQuestion.answer' placeholder='Correct Answer' required><br>
+    <input type="text" ng-model='newQuestion.fake1' placeholder='Fake Answer 1' required><br>
+    <input type="text" ng-model='newQuestion.fake2' placeholder='Fake Answer 2' required><br>
+
+    <input type="submit" value="Add Question">
+    <button type="button" name="button" ng-click='dashboard()'>Cancel</button>
+
+</form>

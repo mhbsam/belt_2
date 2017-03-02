@@ -1,0 +1,37 @@
+<h4>Hello {{user}}!</h4>
+<p>Choose an answer for each of the questions and submit the test once done. Good Luck!</p>
+
+
+<form  ng-repeat="question in questions | orderBy : '-createdAt'| limitTo: 3" >
+    <label for="question">{{question.question}}</label><br>
+
+    <input type="radio"  id='ans' name="radio" value="{{question.answer}}" required>{{question.answer}}<br>
+    <input type="radio"  id='ans' name="radio" value="{{question.fake1}} " required>{{question.fake1}}<br>
+    <input type="radio"  id='ans' name="radio" value="{{question.fake2}}" required>{{question.fake2}}
+    <hr>
+</form>
+
+    <button type="button" ng-click='CreateScore()'>Submit</button>
+    <button type="button" ng-click='dashboard()'>Cancel</button>
+
+
+<!--
+    if (document.getElementById('r1').checked) {
+      rate_value = document.getElementById('r1').value;
+    }
+
+
+    <select >
+        <option>Select a customer</option>
+        <option ng-repeat='customer in customers'  ng-model='newOrder.customer' value={{customer}}>{{customer.name}}</option>
+    </select>
+
+
+    <select ng-model='newOrder.customer' ng-options='customer as customer.name for customer in customers'>
+        <option>Select a customer</option>
+    </select>
+
+
+    <select ng-model='newOrder.product' ng-options='product as product.productname +" ("+product.initial_quantity+")" for product in products'>
+        <option>Select a product</option>
+    </select>  -->

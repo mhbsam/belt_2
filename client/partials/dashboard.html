@@ -1,0 +1,26 @@
+<h3>Hello {{user}}</h3>
+
+<div>
+    <button type="button" ng-click = 'play()'>Play!</button>
+    <p>Click the button above to start the trivia game</p>
+</div>
+
+
+<input type="text" ng-model='search' placeholder="search.." style="margin-top:30px;">
+<table >
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Score</th>
+            <th>Percentage</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr ng-repeat= "customer in customers | orderBy : 'score'| filter:search | limitTo : 5">
+            <td ng-bind ='customer.name'></td>
+            <td ng-bind ='customer.score'></td>
+            <td ng-bind ='customer.percentage'></td>
+        </tr>
+    </tbody>
+</table>
